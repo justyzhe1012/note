@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+<!-- 繼承自 base.html -->
+
+{% block title %}所有筆記{% endblock %} {% block content %}
+
+<form method="GET" action="{% url 'view_all' %}">
+  <label for="folder">選擇文件夾：</label>
+  <select name="folder" id="folder">
+    <option value="">所有文件夾</option>
+    {% for folder in folders %}
+    <option value="{{ folder.id }}">{{ folder.name }}</option>
+    {% endfor %}
+  </select>
+  <button type="submit">篩選</button>
+</form>
+
+<table border="1" cellpadding="0" cellspacing="0">
+  <thead>
+    <tr>
+      <th>編號</th>
+      <th>筆記名稱</th>
+      <th>日期</th>
+      <th>內容</th>
+      <th>圖片</th>
+      <th>PDF</th>
+      <th>操作</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for note in notes %}
+    <tr>
+      <td>{{ note.id }}</td>
+      <td><a href="{% url 'view_note' note.id %}">{{ note.nName }}</a></td>
+      <!-- 修改這裡 -->
+      <td>{{ note.nDate }}</td>
+      <td>{{ note.nDescription }}</td>
+      <td>
+        {% for image in note.images.all %}
+        <img src="{{ image.image.url }}" alt="Image" style="max-width: 100px" />
+        {% endfor %}
+      </td>
+      <td>
+        {% for pdf in note.pdfs.all %}
+        <a href="{{ pdf.pdf.url }}" target="_blank">查看PDF</a>
+        {% endfor %}
+      </td>
+      <td>
+        <a href="{% url 'modify' note.id %}">編輯</a> |
+        <a
+          href="{% url 'delete' note.id %}"
+          onclick="return confirm('確定要刪除這筆記錄嗎？');"
+          >刪除</a
+        >
+      </td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endblock %}

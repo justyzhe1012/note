@@ -1,0 +1,183 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>修改筆記</title>
+    <link rel="stylesheet" href="{% static 'styles.css' %}"> <!-- 引入 CSS 檔案 -->
+    <script src="https://cdn.ckeditor.com/4.16.0/standard/ckeditor.js"></script>
+    <style>
+        textarea {
+            width: 100%;
+            height: 200px;
+            resize: vertical;
+        }
+        .section {
+            margin-bottom: 20px; /* 每個區塊的底部邊距 */
+        }
+        .content-block, .image-section, .pdf-section {
+            background: #f9f9f9; /* 背景顏色 */
+            padding: 15px; /* 內邊距 */
+            border-radius: 5px; /* 圆角 */
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1); /* 陰影效果 */
+        }
+        button {
+            background-color: #35424a; /* 按鈕背景顏色 */
+            color: white; /* 按鈕文字顏色 */
+            border: none; /* 無邊框 */
+            padding: 10px 15px; /* 內邊距 */
+            cursor: pointer; /* 鼠標懸停變成手形 */
+            border-radius: 5px; /* 圆角 */
+            transition: background-color 0.3s ease; /* 增加背景顏色變化效果 */
+        }
+        button:hover {
+            background-color: #45a049; /* 滑鼠懸停變色 */
+        }
+    </style>
+</head>
+<body>
+    <h1>修改筆記</h1>
+    <form method="post" action="{% url 'modify' note.id %}" enctype="multipart/form-data">
+        {% csrf_token %}
+        
+        <p>筆記名稱: <input type="text" name="name" value="{{ note.nName }}" required /></p>
+        <p>日期: <input type="date" name="date" value="{{ note.nDate|date:'Y-m-d' }}" required /></p>
+
+        <p>內容:</p>
+        <div id="content-blocks">
+            {% for content in contents %}
+                <div class="content-block section">
+                    <textarea name="description[]" required>{{ content.content }}</textarea>
+                    <button type="button" onclick="removeBlock(this)">刪除</button>
+                </div>
+            {% endfor %}
+            <div class="content-block section">
+                <textarea name="description[]" required></textarea>
+                <button type="button" onclick="removeBlock(this)">刪除</button>
+            </div>
+        </div>
+        <button type="button" onclick="addContent()">添加更多內容</button>
+
+        <p>
+            目前圖片:
+            <div id="images" class="section">
+                {% if images %}
+                    {% for image in images %}
+                        <div class="image-section">
+                            <img src="{{ image.image.url }}" alt="Current image" style="max-width: 200px;">
+                            <button type="button" onclick="deleteImage({{ image.id }})">刪除</button>
+                        </div>
+                    {% endfor %}
+                {% endif %}
+            </div>
+            <br>
+            更新圖片:
+            <button type="button" onclick="addImage()">添加更多圖片</button>
+            <input type="file" name="image[]" accept="image/*" style="display:none;" multiple id="new-image-input" />
+        </p>
+
+        <p>
+            目前PDF:
+            <div id="pdfs" class="section">
+                {% if pdfs %}
+                    {% for pdf in pdfs %}
+                        <div class="pdf-section">
+                            <a href="{{ pdf.pdf.url }}" target="_blank">查看當前PDF</a>
+                            <button type="button" onclick="deletePDF({{ pdf.id }})">刪除</button>
+                        </div>
+                    {% endfor %}
+                {% endif %}
+            </div>
+            <br>
+            更新PDF:
+            <button type="button" onclick="addPDF()">添加更多PDF</button>
+            <input type="file" name="pdf[]" accept="application/pdf" style="display:none;" multiple id="new-pdf-input" />
+        </p>
+
+        <p>
+            <label for="folder">選擇文件夾：</label>
+            <select name="folder" id="folder" required>
+                {% for folder in folders %}
+                    <option value="{{ folder.id }}" {% if folder == note.folder %}selected{% endif %}>
+                        {{ folder.name }}
+                    </option>
+                {% endfor %}
+            </select>
+        </p>
+
+        <p><button type="submit">確定</button></p>
+    </form>
+
+    <script>
+        CKEDITOR.replace('description[]');
+
+        function addContent() {
+            const container = document.getElementById("content-blocks");
+            const div = document.createElement("div");
+            div.className = "content-block section";
+            div.innerHTML = `
+                <textarea name="description[]" required></textarea>
+                <button type="button" onclick="removeBlock(this)">刪除</button>
+            `;
+            container.appendChild(div);
+            CKEDITOR.replace(div.querySelector("textarea"));
+        }
+
+        function addImage() {
+            const container = document.getElementById("images");
+            const div = document.createElement("div");
+            div.className = "image-section";
+            div.innerHTML = `
+                <input type="file" name="image[]" accept="image/*" />
+                <button type="button" onclick="removeImage(this)">刪除</button>
+            `;
+            container.appendChild(div);
+        }
+
+        function addPDF() {
+            const container = document.getElementById("pdfs");
+            const div = document.createElement("div");
+            div.className = "pdf-section";
+            div.innerHTML = `
+                <input type="file" name="pdf[]" accept="application/pdf" />
+                <button type="button" onclick="removePDF(this)">刪除</button>
+            `;
+            container.appendChild(div);
+        }
+
+        function removeImage(button) {
+            const block = button.parentElement;
+            block.parentElement.removeChild(block);
+        }
+
+        function removePDF(button) {
+            const block = button.parentElement;
+            block.parentElement.removeChild(block);
+        }
+
+        function deleteImage(imageId) {
+            fetch(`/delete_image/${imageId}/`, { method: 'DELETE' })
+                .then(response => {
+                    if (response.ok) {
+                        location.reload();
+                    }
+                });
+        }
+
+        function deletePDF(pdfId) {
+            fetch(`/delete_pdf/${pdfId}/`, { method: 'DELETE' })
+                .then(response => {
+                    if (response.ok) {
+                        location.reload();
+                    }
+                });
+        }
+
+        function removeBlock(button) {
+            const block = button.parentElement;
+            block.parentElement.removeChild(block);
+        }
+    </script>
+</body>
+</html>

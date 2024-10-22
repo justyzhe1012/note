@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{{ note.nName }}</title>
+  </head>
+  <body>
+    <h1>{{ note.nName }}</h1>
+    <p><strong>日期:</strong> {{ note.nDate }}</p>
+
+    <h2>內容</h2>
+    {% for content in contents %}
+    <p>{{ content.content }}</p>
+    {% empty %}
+    <p>沒有內容。</p>
+    {% endfor %}
+
+    <h2>圖片</h2>
+    {% for image in images %}
+    <div>
+      <img src="{{ image.image.url }}" alt="{{ image.description }}" />
+      {% if image.description %}
+      <p>{{ image.description }}</p>
+      {% endif %}
+    </div>
+    {% empty %}
+    <p>沒有圖片。</p>
+    {% endfor %}
+
+    <h2>PDF文件</h2>
+    {% for pdf in pdfs %}
+    <div>
+      <a href="{{ pdf.pdf.url }}">{{ pdf.description|default:"下載 PDF" }}</a>
+    </div>
+    {% empty %}
+    <p>沒有 PDF 文件。</p>
+    {% endfor %}
+
+    <p><a href="{% url 'listall' %}">返回所有筆記</a></p>
+    <p><a href="{% url 'modify' note.id %}">修改此筆記</a></p>
+    <!-- 假設你有一個 modify 視圖 -->
+  </body>
+</html>

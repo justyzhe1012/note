@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+<!-- 繼承自 base.html -->
+
+{% block title %}第一篇筆記{% endblock %}
+<!-- 設置頁面標題 -->
+
+{% block content %}
+<h2>顯示本地的第一篇筆記</h2>
+
+<p><strong>編號:</strong> {{ unit.id }}</p>
+<p><strong>筆記標題:</strong> {{ unit.nName }}</p>
+<p><strong>日期:</strong> {{ unit.nDate }}</p>
+<p><strong>內容:</strong> {{ unit.nDescription }}</p>
+
+<p><a href="{% url 'listall' %}">返回所有筆記</a></p>
+<!-- 返回列表的連結 -->
+{% endblock %}

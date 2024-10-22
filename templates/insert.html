@@ -1,0 +1,154 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="zh-Hant">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>新增筆記</title>
+    <link rel="stylesheet" href="{% static 'styles.css' %}" />
+    <!-- 引入 CSS 檔案 -->
+    <script src="https://cdn.ckeditor.com/4.16.0/standard/ckeditor.js"></script>
+    <style>
+      textarea {
+        width: 100%;
+        height: 200px; /* 調整高度以使其更大 */
+        resize: vertical; /* 允許用戶垂直調整大小 */
+      }
+      .section {
+        margin-bottom: 20px; /* 每個區塊的底部邊距 */
+      }
+      .content-block,
+      .image-section,
+      .pdf-section {
+        background: #f9f9f9; /* 背景顏色 */
+        padding: 15px; /* 內邊距 */
+        border-radius: 5px; /* 圆角 */
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1); /* 陰影效果 */
+      }
+      button {
+        background-color: #35424a; /* 按鈕背景顏色 */
+        color: white; /* 按鈕文字顏色 */
+        border: none; /* 無邊框 */
+        padding: 10px 15px; /* 內邊距 */
+        cursor: pointer; /* 鼠標懸停變成手形 */
+        border-radius: 5px; /* 圆角 */
+        transition: background-color 0.3s ease; /* 增加背景顏色變化效果 */
+      }
+      button:hover {
+        background-color: #45a049; /* 滑鼠懸停變色 */
+      }
+    </style>
+  </head>
+  <body>
+    <h1>新增筆記</h1>
+    <form
+      method="post"
+      action="{% url 'insert' %}"
+      enctype="multipart/form-data"
+    >
+      {% csrf_token %}
+      <p>筆記名稱:<input type="text" name="name" required /></p>
+      <p>日期:<input type="date" name="date" required /></p>
+
+      <div id="content-blocks">
+        {% for content in contents %}
+        <div class="content-block section">
+          <textarea name="description[]" required>
+{{ content.content }}</textarea
+          >
+          <button type="button" onclick="removeBlock(this)">刪除</button>
+        </div>
+        {% endfor %}
+      </div>
+      <button type="button" onclick="addContent()">添加更多內容</button>
+
+      <div id="images" class="section">
+        <div class="image-section">
+          <p>
+            圖片 1:
+            <input type="file" name="image[]" accept="image/*" />
+            <input
+              type="text"
+              name="image_description[]"
+              placeholder="圖片描述"
+            />
+          </p>
+        </div>
+      </div>
+      <button type="button" onclick="addImage()">添加更多圖片</button>
+
+      <div id="pdfs" class="section">
+        <div class="pdf-section">
+          <p>
+            PDF 1:
+            <input type="file" name="pdf[]" accept="application/pdf" />
+            <input type="text" name="pdf_description[]" placeholder="PDF描述" />
+          </p>
+        </div>
+      </div>
+      <button type="button" onclick="addPDF()">添加更多PDF</button>
+
+      <p>
+        <label for="folder">選擇文件夾：</label>
+        <select name="folder" id="folder" required>
+          <option value="">選擇文件夾</option>
+          {% for folder in folders %}
+          <option value="{{ folder.id }}">{{ folder.name }}</option>
+          {% endfor %}
+        </select>
+      </p>
+
+      <p><button type="submit">確定</button></p>
+    </form>
+
+    <script>
+      CKEDITOR.replace("description[]"); // 將 'description' 的 textarea 替換為 CKEditor
+
+      function addContent() {
+        const container = document.getElementById("content-blocks");
+        const count = container.children.length + 1;
+        const div = document.createElement("div");
+        div.className = "content-block section";
+        div.innerHTML = `
+                <textarea name="description[]" required></textarea>
+                <button type="button" onclick="removeBlock(this)">刪除</button>
+            `;
+        container.appendChild(div);
+        CKEDITOR.replace(div.querySelector("textarea"));
+      }
+
+      function addImage() {
+        const container = document.getElementById("images");
+        const count = container.children.length + 1;
+        const div = document.createElement("div");
+        div.className = "image-section";
+        div.innerHTML = `
+                <p>圖片 ${count}:
+                    <input type="file" name="image[]" accept="image/*" />
+                    <input type="text" name="image_description[]" placeholder="圖片描述" />
+                </p>
+            `;
+        container.appendChild(div);
+      }
+
+      function addPDF() {
+        const container = document.getElementById("pdfs");
+        const count = container.children.length + 1;
+        const div = document.createElement("div");
+        div.className = "pdf-section";
+        div.innerHTML = `
+                <p>PDF ${count}:
+                    <input type="file" name="pdf[]" accept="application/pdf" />
+                    <input type="text" name="pdf_description[]" placeholder="PDF描述" />
+                </p>
+            `;
+        container.appendChild(div);
+      }
+
+      function removeBlock(button) {
+        const block = button.parentElement;
+        block.parentElement.removeChild(block);
+      }
+    </script>
+  </body>
+</html>
